@@ -1,0 +1,137 @@
+
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>เกมจับคู่คำศัพท์จีน - เส้นไม่ทับกล่อง</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #fffdf9;
+      padding: 40px;
+      display: flex;
+      justify-content: center;
+    }
+    .container {
+      position: relative;
+      display: flex;
+      gap: 60px;
+    }
+    .column {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      z-index: 2;
+    }
+    .card {
+      background-color: #ffe4ec;
+      border-radius: 10px;
+      padding: 12px 18px;
+      min-width: 100px;
+      text-align: center;
+      cursor: pointer;
+      font-size: 30px;
+      font-weight: bold;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      position: relative;
+      z-index: 2;
+    }
+    canvas {
+      position: absolute;
+      left: 0;
+      top: 0;
+      pointer-events: none;
+      z-index: 1;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <canvas id="lineCanvas"></canvas>
+  <div class="column" id="thaiColumn">
+    <div class="card" data-meaning="รัก">รัก</div>
+    <div class="card" data-meaning="แมว">แมว</div>
+    <div class="card" data-meaning="น้ำ">น้ำ</div>
+  </div>
+  <div class="column" id="chineseColumn">
+    <div class="card" data-word="爱" data-pinyin="ài">爱<br><small>ài</small></div>
+    <div class="card" data-word="猫" data-pinyin="māo">猫<br><small>māo</small></div>
+    <div class="card" data-word="水" data-pinyin="shuǐ">水<br><small>shuǐ</small></div>
+  </div>
+</div>
+
+<script>
+  const canvas = document.getElementById("lineCanvas");
+  const ctx = canvas.getContext("2d");
+  const thaiCards = document.querySelectorAll("#thaiColumn .card");
+  const chineseCards = document.querySelectorAll("#chineseColumn .card");
+  let selectedChinese = null;
+  const matched = new Set();
+
+  function speakChinese(text) {
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'zh-CN';
+    speechSynthesis.speak(utterance);
+  }
+
+  function drawCurvedLine(fromEl, toEl) {
+    const rect1 = fromEl.getBoundingClientRect();
+    const rect2 = toEl.getBoundingClientRect();
+    const canvasRect = canvas.getBoundingClientRect();
+
+    const x1 = rect1.right - canvasRect.left;
+    const y1 = rect1.top + rect1.height / 2 - canvasRect.top;
+    const x2 = rect2.left - canvasRect.left;
+    const y2 = rect2.top + rect2.height / 2 - canvasRect.top;
+
+    const cp1x = x1 + 60;
+    const cp1y = y1 - 30;
+    const cp2x = x2 - 60;
+    const cp2y = y2 - 30;
+
+    ctx.strokeStyle = "#4CAF50";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, x2, y2);
+    ctx.stroke();
+  }
+
+  chineseCards.forEach(card => {
+    card.addEventListener("click", () => {
+      if (matched.has(card)) return;
+      selectedChinese = card;
+      speakChinese(card.dataset.word);
+    });
+  });
+
+  thaiCards.forEach(card => {
+    card.addEventListener("click", () => {
+      if (!selectedChinese || matched.has(selectedChinese)) return;
+      const chineseWord = selectedChinese.dataset.word;
+      const thaiWord = card.dataset.meaning;
+
+      const match = (chineseWord === "爱" && thaiWord === "รัก") ||
+                    (chineseWord === "猫" && thaiWord === "แมว") ||
+                    (chineseWord === "水" && thaiWord === "น้ำ");
+
+      if (match) {
+        matched.add(selectedChinese);
+        drawCurvedLine(selectedChinese, card);
+      }
+      selectedChinese = null;
+    });
+  });
+
+  function resizeCanvas() {
+    canvas.width = document.querySelector(".container").offsetWidth;
+    canvas.height = document.querySelector(".container").offsetHeight;
+  }
+
+  window.addEventListener("resize", resizeCanvas);
+  window.addEventListener("load", resizeCanvas);
+</script>
+
+</body>
+</html>
