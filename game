@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>เมนูหลัก - แอพเกมภาษาจีน</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: #fff0f5;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+    h1 {
+      font-size: 36px;
+      color: #d63384;
+      margin-bottom: 40px;
+    }
+    .menu-button {
+      background: #ff69b4;
+      color: white;
+      border: none;
+      padding: 14px 30px;
+      font-size: 20px;
+      border-radius: 10px;
+      cursor: pointer;
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+      transition: transform 0.2s ease;
+    }
+    .menu-button:hover {
+      background: #e0559c;
+      transform: scale(1.05);
+    }
+  </style>
+</head>
+<body>
+  <h1>🌸 แอพเกมคำศัพท์จีน 🌸</h1>
+  <button class="menu-button" onclick="location.href='game.html'">
+    🎮 เข้าเล่นเกมโยงคำ
+  </button>
+</body>
+</html>
