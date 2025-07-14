@@ -1,0 +1,166 @@
+
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>เกมจับคู่คำศัพท์จีน - เส้นชัด โค้งอ้อม เริ่มที่ขอบกลาง</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #fffdf9;
+      padding: 40px;
+      display: flex;
+      justify-content: center;
+    }
+    .container {
+      position: relative;
+      display: flex;
+      gap: 378px; /* ระยะห่าง ~10cm */
+    }
+    .column {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      z-index: 2;
+    }
+    .card {
+      background-color: rgba(255, 228, 236, 0.8);
+      border-radius: 10px;
+      padding: 12px 18px;
+      min-width: 100px;
+      text-align: center;
+      cursor: pointer;
+      font-size: 30px;
+      font-weight: bold;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      position: relative;
+      z-index: 2;
+    }
+    canvas {
+      position: absolute;
+      left: 0;
+      top: 0;
+      pointer-events: none;
+      z-index: 1;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <canvas id="lineCanvas"></canvas>
+  <div class="column" id="thaiColumn">
+    <div class="card" data-meaning="ห้า">ห้า</div>
+    <div class="card" data-meaning="หนึ่ง">หนึ่ง</div>
+    <div class="card" data-meaning="ผู้หญิง">ผู้หญิง</div>
+    <div class="card" data-meaning="ไม่">ไม่</div>   
+    <div class="card" data-meaning="ปาก">ปาก</div>
+    <div class="card" data-meaning="ม้า">ม้า</div> 
+    <div class="card" data-meaning="ขาว">ขาว</div>   
+    <div class="card" data-meaning="ใหญ่">ใหญ่</div>
+    <div class="card" data-meaning="แปด">แปด</div>
+  </div>
+  <div class="column" id="chineseColumn">
+    <div class="card" data-word="一">一</div>
+    <div class="card" data-word="大">大</div>
+    <div class="card" data-word="口">口</div>
+    <div class="card" data-word="马">马</div>
+    <div class="card" data-word="女">女</div>
+    <div class="card" data-word="不">不</div>
+    <div class="card" data-word="五">五</div>
+    <div class="card" data-word="八">八</div>
+    <div class="card" data-word="白">白</div>
+  </div>
+</div>
+
+<script>
+  const canvas = document.getElementById("lineCanvas");
+  const ctx = canvas.getContext("2d");
+  const thaiCards = document.querySelectorAll("#thaiColumn .card");
+  const chineseCards = document.querySelectorAll("#chineseColumn .card");
+  let selectedChinese = null;
+  const matched = new Set();
+
+  function speakChinese(text) {
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'zh-CN';
+    speechSynthesis.speak(utterance);
+  }
+
+  function drawCurvedLine(fromEl, toEl) {
+    const rect1 = fromEl.getBoundingClientRect();
+    const rect2 = toEl.getBoundingClientRect();
+    const canvasRect = canvas.getBoundingClientRect();
+
+    const x1 = rect1.left; // ขอบขวากล่องจีน
+    const y1 = rect1.top + rect1.height / 2;
+    const x2 = rect2.right; // ขอบซ้ายกล่องไทย
+    const y2 = rect2.top + rect2.height / 2;
+
+    const cx1 = x1 + 10;
+    const cy1 = y1 - 10;
+    const cx2 = x2 - 10;
+    const cy2 = y2 - 10;
+
+    ctx.strokeStyle = "#4CAF50";
+    ctx.lineWidth = 4;
+    ctx.shadowColor = "rgba(76, 175, 80, 0.3)";
+    ctx.shadowBlur = 4;
+
+    ctx.beginPath();
+    ctx.moveTo(x1 - canvasRect.left, y1 - canvasRect.top);
+    ctx.bezierCurveTo(
+      cx1 - canvasRect.left, cy1 - canvasRect.top,
+      cx2 - canvasRect.left, cy2 - canvasRect.top,
+      x2 - canvasRect.left, y2 - canvasRect.top
+    );
+    ctx.stroke();
+  }
+
+  chineseCards.forEach(card => {
+    card.addEventListener("click", () => {
+      if (matched.has(card)) return;
+      selectedChinese = card;
+      speakChinese(card.dataset.word);
+    });
+  });
+
+  thaiCards.forEach(card => {
+    card.addEventListener("click", () => {
+      if (!selectedChinese || matched.has(selectedChinese)) return;
+      const chineseWord = selectedChinese.dataset.word;
+      const thaiWord = card.dataset.meaning;
+
+      const match = (
+        (chineseWord === "五" && thaiWord === "ห้า") ||
+        (chineseWord === "一" && thaiWord === "หนึ่ง") ||
+        (chineseWord === "女" && thaiWord === "ผู้หญิง") ||
+        (chineseWord === "不" && thaiWord === "ไม่") ||
+        (chineseWord === "口" && thaiWord === "ปาก") ||
+        (chineseWord === "马" && thaiWord === "ม้า") ||
+        (chineseWord === "白" && thaiWord === "ขาว") ||
+        (chineseWord === "大" && thaiWord === "ใหญ่") ||
+        (chineseWord === "八" && thaiWord === "แปด")
+      );
+
+      if (match) {
+        matched.add(selectedChinese);
+        drawCurvedLine(selectedChinese, card);
+      }
+
+      selectedChinese = null;
+    });
+  });
+
+  function resizeCanvas() {
+    const rect = document.querySelector(".container").getBoundingClientRect();
+    canvas.width = rect.width;
+    canvas.height = rect.height;
+  }
+
+  window.addEventListener("resize", resizeCanvas);
+  window.addEventListener("load", resizeCanvas);
+</script>
+
+</body>
+</html>
